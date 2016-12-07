@@ -6,7 +6,7 @@ class Semaphore
 	public:
 		Semaphore(int count_ = 0) : count(count_){}
 
-		//leaving critical section and wake up someone who is waiting
+		/*leaving critical section and wake up someone who is waiting*/
 		void signal()
 		{
 			std::unique_lock<std::mutex> lck(mtx);	//acquire lock
@@ -14,7 +14,7 @@ class Semaphore
 			cv.notify_one();	//It wakes up another one sleeping
 		}
 
-		//waiting for enter critical section
+		/*waiting for enter critical section*/
 		void wait()
 		{
 			std::unique_lock<std::mutex> lck(mtx);	//acquire lock
