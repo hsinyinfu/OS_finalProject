@@ -27,7 +27,7 @@ Semaphore tobaccoSem(0);//Tell the smoker with tobacco that he can smoke.
 Semaphore paperSem(0);	//Tell the smoker with paper that he can smoke.
 Semaphore matchSem(0);	//Tell the smoker with match that he can smoke.
 
-int roundCase = 0;//modify to roundCase because I import math::round(It will cause errors with duplicate name)
+int roundCase = 0;//modify to roundCase because I import method called round(It will cause errors with duplicate name)
 int passed = 0;
 bool isEnd = false;
 
@@ -44,7 +44,7 @@ void pusherC();	//function that match is supplied.
 
 int screenWidth=800; //default window size
 int screenHeight=600;//default window size
-
+int deltaTime=50000; //default update time
 static void CheckError(int line)
 {
     GLenum err = glGetError();
@@ -90,36 +90,6 @@ Creature personWithMatch(100,50);
 Creature rTobacco(-100,450);
 Creature rPaper(-100,250);
 Creature rMatch(-100,50);
-void display(void)
-{
-	glClear(GL_COLOR_BUFFER_BIT);//clean buffer
-    personWithTobacco.pic.blendTex(personWithTobacco.getX(),personWithTobacco.getY());
-    personWithPaper.pic.blendTex(personWithPaper.getX(),personWithPaper.getY());
-    personWithMatch.pic.blendTex(personWithMatch.getX(),personWithMatch.getY());
-    rTobacco.pic.blendTex(rTobacco.getX(),rTobacco.getY());
-    rPaper.pic.blendTex(rPaper.getX(),rPaper.getY());
-    rMatch.pic.blendTex(rMatch.getX(),rMatch.getY());
-    CheckError(__LINE__);
-	glutSwapBuffers();
-}
-void reshape(int w,int h)
-{
-    screenWidth=w;
-    screenHeight=h;
-    glViewport(0,0,screenWidth,screenHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0,(GLfloat)screenWidth,0.0,(GLfloat)screenHeight,-1.0,1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-void init(){
-	glutDisplayFunc(display);
-    glutReshapeFunc(reshape);	
-	glShadeModel(GL_SMOOTH);
-
-	glClearColor(1.0f,1.0f,0.4f,1.0);
-}
 void action(int Case){
     switch(Case)
     {
@@ -127,19 +97,19 @@ void action(int Case){
             rPaper.setXY(650,rPaper.getY());
             rMatch.setXY(650,rMatch.getY());
             glutPostRedisplay();
-            usleep(50000);
+            usleep(10*deltaTime);
             break;
         case 2:
             rTobacco.setXY(650,rTobacco.getY());
             rMatch.setXY(650,rMatch.getY());
             glutPostRedisplay();
-            usleep(50000);
+            usleep(10*deltaTime);
             break;
         case 3:
             rPaper.setXY(650,rPaper.getY());
             rTobacco.setXY(650,rTobacco.getY());
             glutPostRedisplay();
-            usleep(50000);
+            usleep(10*deltaTime);
             break;
         case 4:
         {
@@ -155,7 +125,7 @@ void action(int Case){
                     rMatch.setXY(-100,rMatch.getY());
                 }
                 glutPostRedisplay();
-                usleep(50000);
+                usleep(deltaTime);
             }
             break;
         }
@@ -173,7 +143,7 @@ void action(int Case){
                     rMatch.setXY(-100,rMatch.getY());
                 }
                 glutPostRedisplay();
-                usleep(50000);
+                usleep(deltaTime);
             }
             break;
         }
@@ -197,6 +167,49 @@ void action(int Case){
         }
     }
 }
+
+void display(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);//clean buffer
+    //print people and resources' position(following 6 line)
+    personWithTobacco.pic.blendTex(personWithTobacco.getX(),personWithTobacco.getY());
+    personWithPaper.pic.blendTex(personWithPaper.getX(),personWithPaper.getY());
+    personWithMatch.pic.blendTex(personWithMatch.getX(),personWithMatch.getY());
+    rTobacco.pic.blendTex(rTobacco.getX(),rTobacco.getY());
+    rPaper.pic.blendTex(rPaper.getX(),rPaper.getY());
+    rMatch.pic.blendTex(rMatch.getX(),rMatch.getY());
+    CheckError(__LINE__);//print line number if GL occurs error
+	glutSwapBuffers();
+}
+void reshape(int w,int h)
+{
+    screenWidth=w;
+    screenHeight=h;
+    glViewport(0,0,screenWidth,screenHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0,(GLfloat)screenWidth,0.0,(GLfloat)screenHeight,-1.0,1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+void setKeyStateDown(unsigned char key,int x,int y)
+{
+    switch(key)
+    {
+        case 'q':case 'Q':
+            exit(0);
+            break;
+    }
+}
+void init(){
+	glutDisplayFunc(display);
+    glutReshapeFunc(reshape);	
+	glShadeModel(GL_SMOOTH);
+    glutKeyboardFunc(setKeyStateDown);
+
+	glClearColor(1.0f,1.0f,0.4f,1.0);
+}
+
 int main(int argc,char **argv){
 	srand(time(NULL));
 	thread myThread[THREAD_NUM];
@@ -223,7 +236,6 @@ int main(int argc,char **argv){
 		myThread[i].join();
 	}*/
     glutMainLoop();
-    cout<<roundCase<<endl;  
 }
 
 void createThread(thread myThread[THREAD_NUM]){
@@ -300,7 +312,6 @@ void agA(){
         action(3);
         tobacco.signal();
 		paper.signal();
-//        action(3);
 		if( isEnd )
 			break;
 	}
@@ -313,7 +324,6 @@ void agB(){
         action(1);
 		paper.signal();
 		match.signal();
-       // action(1);
 		if( isEnd )
 			break;
 	}
@@ -326,7 +336,6 @@ void agC(){
 		action(2);
         match.signal();
 		tobacco.signal();
-        //action(2);
 		if( isEnd )
 			break;
 	}
