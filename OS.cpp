@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<thread>
 #include<mutex>
+#include<unistd.h>
 #include"SemaphoreClass.h"
 #include"RGBpixmap.h"
 #ifdef __APPLE__
@@ -95,13 +96,9 @@ void display(void)
     personWithTobacco.pic.blendTex(personWithTobacco.getX(),personWithTobacco.getY());
     personWithPaper.pic.blendTex(personWithPaper.getX(),personWithPaper.getY());
     personWithMatch.pic.blendTex(personWithMatch.getX(),personWithMatch.getY());
-    char mss[5]="AAAA";
-    glRasterPos2i(300,300);
-    glColor3f(0.5f,0.5f,0.5f);
-    for(int i=0;i<strlen(mss);i++)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,mss[i]);
-    }
+    rTobacco.pic.blendTex(rTobacco.getX(),rTobacco.getY());
+    rPaper.pic.blendTex(rPaper.getX(),rPaper.getY());
+    rMatch.pic.blendTex(rMatch.getX(),rMatch.getY());
     CheckError(__LINE__);
 	glutSwapBuffers();
 }
@@ -123,10 +120,82 @@ void init(){
 
 	glClearColor(1.0f,1.0f,0.4f,1.0);
 }
-void update(int i){
-    cout<<i<<endl;
-    glutTimerFunc(1000,update,++i);
-    glutPostRedisplay();
+void action(int Case){
+    switch(Case)
+    {
+        case 1:
+            rPaper.setXY(650,rPaper.getY());
+            rMatch.setXY(650,rMatch.getY());
+            glutPostRedisplay();
+            usleep(50000);
+            break;
+        case 2:
+            rTobacco.setXY(650,rTobacco.getY());
+            rMatch.setXY(650,rMatch.getY());
+            glutPostRedisplay();
+            usleep(50000);
+            break;
+        case 3:
+            rPaper.setXY(650,rPaper.getY());
+            rTobacco.setXY(650,rTobacco.getY());
+            glutPostRedisplay();
+            usleep(50000);
+            break;
+        case 4:
+        {
+            for(int i=0;i<80;i++)
+            {
+                if(i<40)
+                    personWithTobacco.setXY(personWithTobacco.getX()+10,personWithTobacco.getY());
+                else
+                    personWithTobacco.setXY(personWithTobacco.getX()-10,personWithTobacco.getY());
+                if(i==39)
+                {
+                    rPaper.setXY(-100,rPaper.getY());
+                    rMatch.setXY(-100,rMatch.getY());
+                }
+                glutPostRedisplay();
+                usleep(50000);
+            }
+            break;
+        }
+        case 5:
+        {
+            for(int i=0;i<80;i++)
+            {
+                if(i<40)
+                    personWithPaper.setXY(personWithPaper.getX()+10,personWithPaper.getY());
+                else
+                    personWithPaper.setXY(personWithPaper.getX()-10,personWithPaper.getY());
+                if(i==39)
+                {
+                    rTobacco.setXY(-100,rTobacco.getY());
+                    rMatch.setXY(-100,rMatch.getY());
+                }
+                glutPostRedisplay();
+                usleep(50000);
+            }
+            break;
+        }
+        case 6:
+        {
+            for(int i=0;i<80;i++)
+            {
+                if(i<40)
+                    personWithMatch.setXY(personWithMatch.getX()+10,personWithMatch.getY());
+                else
+                    personWithMatch.setXY(personWithMatch.getX()-10,personWithMatch.getY());
+                if(i==39)
+                {
+                    rPaper.setXY(-100,rPaper.getY());
+                    rTobacco.setXY(-100,rTobacco.getY());
+                }
+                glutPostRedisplay();
+                usleep(50000);
+            }
+            break;
+        }
+    }
 }
 int main(int argc,char **argv){
 	srand(time(NULL));
@@ -144,15 +213,17 @@ int main(int argc,char **argv){
     rTobacco.setCreature(0);
     rPaper.setCreature(1);
     rMatch.setCreature(2);
-	/*cout <<"How many round?";
-	cin >> roundCase;
 
+
+	//cout <<"How many round?";
+	//cin >> roundCase;
+    roundCase=10;
 	createThread(myThread);
-	for(int i=0; i<THREAD_NUM; i++){
+	/*for(int i=0; i<THREAD_NUM; i++){
 		myThread[i].join();
 	}*/
-    //update(0);
-	glutMainLoop();
+    glutMainLoop();
+    cout<<roundCase<<endl;  
 }
 
 void createThread(thread myThread[THREAD_NUM]){
@@ -172,6 +243,7 @@ void smkrTobacco(){
 		tobaccoSem.wait();
 		if(passed < roundCase){
 			cout <<"tobacco\n";
+            action(4);
 			passed++;
 		}
 		if(passed == roundCase)
@@ -189,6 +261,7 @@ void smkrPaper(){
 		paperSem.wait();
 		if(passed < roundCase){
 			cout <<"paper\n";
+            action(5);
 			passed++;
 		}
 		if(passed == roundCase)
@@ -206,6 +279,7 @@ void smkrMatch(){
 		matchSem.wait();
 		if(passed < roundCase){
 			cout <<"match\n";
+            action(6);
 			passed++;
 		}
 		if(passed == roundCase)
@@ -223,8 +297,10 @@ void agA(){
 		agSem.wait();
 		if(passed < roundCase)
 			cout <<"sup to pa.\n";
-		tobacco.signal();
+        action(3);
+        tobacco.signal();
 		paper.signal();
+//        action(3);
 		if( isEnd )
 			break;
 	}
@@ -234,8 +310,10 @@ void agB(){
 		agSem.wait();
 		if(passed < roundCase)
 			cout <<"sup pa ma.\n";
+        action(1);
 		paper.signal();
 		match.signal();
+       // action(1);
 		if( isEnd )
 			break;
 	}
@@ -245,8 +323,10 @@ void agC(){
 		agSem.wait();
 		if(passed < roundCase)
 			cout <<"sup ma to.\n";
-		match.signal();
+		action(2);
+        match.signal();
 		tobacco.signal();
+        //action(2);
 		if( isEnd )
 			break;
 	}
