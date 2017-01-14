@@ -25,6 +25,10 @@ using namespace std;
 mutex mtx;	/*lock which is used to prevent race condition between agents.*/
 mutex mtx2; /*lock which is used to prevent race condition between agents and smoker who can access the table.*/
 Semaphore agSem(0);	/*Semaphore used to wake up one of the Agents to suppy ingredients.*/
+
+/*
+ * Share variable
+ * */
 int tableContent;
 int smokerComingTime;
 int smokingTime;
@@ -42,6 +46,9 @@ int screenWidth = 800;
 int screenHeight = 600;
 int deltaTime = 50000;	//default update time
 
+/*
+ * Thread related function declaration
+ * */
 void cleanTable();
 void createThread(thread[]);
 void smkrTobacco(); //function of smoker with tobacco
@@ -51,10 +58,82 @@ void agTobacco(); //function for supplied of tobacco.
 void agPaper(); //function for supplied of paper.
 void agMatch(); //function for supplied of match.
 
+/*
+ * openGL related function declaration
+ * */
+void display();
+static void CheckError(int);
+void reshape(int,int);
+void setKeyStateDown(unsigned char,int,int);
+void action(int);
+void init();
+
+class Creature{
+	public:
+		Creature(){}
+		Creature(double _x,double _y){x=_x,y=_y;}
+		void setCreature(int n){
+			if(n==0)
+			{
+				pic.readBMPFile("image/R.bmp");
+				pic.setChromaKey(1.0,1.0,1.0);
+			}
+			else if(n==1)
+			{
+				pic.readBMPFile("image/G.bmp");
+				pic.setChromaKey(1.0,1.0,1.0);
+			}
+			else
+			{
+				pic.readBMPFile("image/B.bmp");
+				pic.setChromaKey(1.0,1.0,1.0);
+			}
+		}
+		RGBApixmap pic;
+		void setXY(double _x,double _y){x=_x,y=_y;}
+		double getX(){return x;}
+		double getY(){return y;}
+	private:
+		double x;
+		double y;
+};
+
+
+/*
+ * Object initialization
+ * */
+Creature personWithTobacco(100,450);
+Creature personWithPaper(100,250);
+Creature personWithMatch(100,50);
+
+/*
+ * resource below
+ * */
+Creature rTobacco(-100,450);
+Creature rPaper(-100,250);
+Creature rMatch(-100,50);
+
+
 int main(int argc,char **argv){
 	srand(time(NULL));
 	tableContent = EMPTY;
 	thread myThread[THREAD_NUM];
+
+	/*Initialize GUI*/
+	glutInit(&argc,argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+	glutInitWindowPosition(0,0);
+	glutInitWindowSize(screenWidth,screenHeight);
+	glutCreateWindow("OS_FinalProject");
+	init();
+	personWithTobacco.setCreature(0);
+	personWithPaper.setCreature(1);
+	personWithMatch.setCreature(2);
+	rTobacco.setCreature(0);
+	rPaper.setCreature(1);
+	rMatch.setCreature(2);
+
+	/*Start threads*/
 	createThread(myThread);
 	agSem.signal();
 	agSem.signal();
@@ -147,7 +226,7 @@ void smkrMatch(){
  *(3)After signal,acquire lck2 with mtx2 to prevent smoker entering its critical section
  *   when the agent finished supply ( tableContent += xxx ) but didn't make smokerComingTime. => race condition
  *(4)if any other agent put something on table, the second agent has to decide "smokerComingTime" before putting its own
-     resource on the table.
+ resource on the table.
  * */
 
 void agTobacco(){
@@ -191,4 +270,65 @@ void agMatch(){
 		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH)
 			cout <<"smokerComingTime = " <<smokerComingTime <<endl;
 	}
+}
+
+/*
+ * openGL related function definition
+ * */
+void display(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);//clean buffer
+	//print people and resources' position(following 6 line)
+	personWithTobacco.pic.blendTex(personWithTobacco.getX(),personWithTobacco.getY());
+	personWithPaper.pic.blendTex(personWithPaper.getX(),personWithPaper.getY());
+	personWithMatch.pic.blendTex(personWithMatch.getX(),personWithMatch.getY());
+	rTobacco.pic.blendTex(rTobacco.getX(),rTobacco.getY());
+	rPaper.pic.blendTex(rPaper.getX(),rPaper.getY());
+	rMatch.pic.blendTex(rMatch.getX(),rMatch.getY());
+	CheckError(__LINE__);//print line number if GL occurs error
+	glutSwapBuffers();
+}
+
+static void CheckError(int line)
+{
+	GLenum err = glGetError();
+	if (err)
+	{
+		printf("GL Error %s (0x%x) at line %d\n",gluErrorString(err), (int) err, line);
+	}
+}
+
+void reshape(int w,int h)
+{
+	screenWidth=w;
+	screenHeight=h;
+	glViewport(0,0,screenWidth,screenHeight);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0,(GLfloat)screenWidth,0.0,(GLfloat)screenHeight,-1.0,1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void setKeyStateDown(unsigned char key,int x,int y)
+{
+	switch(key)
+	{
+		case 'q':case 'Q':
+			exit(0);
+			break;
+	}
+}
+
+void init(){
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glShadeModel(GL_SMOOTH);
+	glutKeyboardFunc(setKeyStateDown);
+
+	glClearColor(1.0f,1.0f,0.4f,1.0);
+}
+
+void action(int Case){
+	cout <<"hi" <<endl;
 }
