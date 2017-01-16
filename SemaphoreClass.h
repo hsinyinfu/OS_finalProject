@@ -14,6 +14,12 @@ class Semaphore
 			cv.notify_one();	//It wakes up another one sleeping
 		}
 
+		void signal(int n)
+		{
+			std::unique_lock<std::mutex> lck(mtx);
+			count += n;
+			cv.notify_all();
+		}
 		/*waiting for enter critical section*/
 		void wait()
 		{
