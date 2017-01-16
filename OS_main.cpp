@@ -21,10 +21,12 @@ using namespace std;
 #define MATCH 5
 #define MEAN 4 //for poisson random variable
 #define EMPTY 0
+#define TIME_FOR_ADJUSTMENT 100
 
 mutex mtx;	/*lock which is used to prevent race condition between agents.*/
 mutex mtx2; /*lock which is used to prevent race condition between agents and smoker who can access the table.*/
 Semaphore agSem(0);	/*Semaphore used to wake up one of the Agents to suppy ingredients.*/
+Semaphore smkrSem(0);
 int tableContent;
 int smokerComingTime;
 int smokingTime;
@@ -51,33 +53,33 @@ void agTobacco(); //function for supplied of tobacco.
 void agPaper(); //function for supplied of paper.
 void agMatch(); //function for supplied of match.
 
-int main(int argc,char **argv){
+int main(int argc,char **argv){/*{{{*/
 	srand(time(NULL));
 	tableContent = EMPTY;
 	thread myThread[THREAD_NUM];
 	createThread(myThread);
-	agSem.signal();
+	this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 	agSem.signal();
 	myThread[0].join();
-	myThread[1].join();
-	myThread[2].join();
-	myThread[3].join();
-	myThread[4].join();
-	myThread[5].join();
-}
+	/*	myThread[1].join();
+		myThread[2].join();
+		myThread[3].join();
+		myThread[4].join();
+		myThread[5].join();*/
+}/*}}}*/
 
-void createThread(thread myThread[THREAD_NUM]){
+void createThread(thread myThread[THREAD_NUM]){/*{{{*/
 	myThread[0] = thread(smkrTobacco);
 	myThread[1] = thread(smkrPaper);
 	myThread[2] = thread(smkrMatch);
 	myThread[3] = thread(agTobacco);
 	myThread[4] = thread(agPaper);
 	myThread[5] = thread(agMatch);
-}
+}/*}}}*/
 
-void cleanTable(){
+void cleanTable(){/*{{{*/
 	tableContent = 0;
-}
+}/*}}}*/
 
 
 /*What do smoker threads do?
@@ -88,57 +90,63 @@ void cleanTable(){
  *(5)clean the table and wake up the agents
  * */
 
-void smkrTobacco(){
+void smkrTobacco(){/*{{{*/
 	while(1){
 		if(tableContent == (PAPER + MATCH)){
 			unique_lock<mutex> lck(mtx2);
 			this_thread::sleep_for(chrono::seconds(smokerComingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
 			smokingTime = distribution(generator);
 			cout <<"smkrTobacco is smoking for " <<smokingTime <<"seconds." <<endl;
 			this_thread::sleep_for(chrono::seconds(smokingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokingTime));
 			cout <<"Finish" <<endl;
 			cout <<"Clean the table" <<endl;
 			cleanTable();
 			cout <<"Wake up the agent" <<endl <<endl;
-			agSem.signal();
+//			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 			agSem.signal();
 		}
 	}
-}
-void smkrPaper(){
+}/*}}}*/
+void smkrPaper(){/*{{{*/
 	while(1){
 		if(tableContent == (TABACCO + MATCH)){
 			unique_lock<mutex> lck(mtx2);
 			this_thread::sleep_for(chrono::seconds(smokerComingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
 			smokingTime = distribution(generator);
 			cout <<"smkrPaper is smoking for " <<smokingTime <<"seconds." <<endl;
 			this_thread::sleep_for(chrono::seconds(smokingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokingTime));
 			cout <<"Finish" <<endl;
 			cout <<"Clean the table" <<endl;
 			cleanTable();
 			cout <<"Wake up the agent" <<endl <<endl;
-			agSem.signal();
+//			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 			agSem.signal();
 		}
 	}
-}
-void smkrMatch(){
+}/*}}}*/
+void smkrMatch(){/*{{{*/
 	while(1){
 		if(tableContent == (TABACCO + PAPER)){
 			unique_lock<mutex> lck(mtx2);
 			this_thread::sleep_for(chrono::seconds(smokerComingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
 			smokingTime = distribution(generator);
 			cout <<"smkrMatch is smoking for " <<smokingTime <<"seconds." <<endl;
 			this_thread::sleep_for(chrono::seconds(smokingTime));
+			this_thread::sleep_for(chrono::milliseconds(smokingTime));
 			cout <<"Finish" <<endl;
 			cout <<"Clean the table" <<endl;
 			cleanTable();
 			cout <<"Wake up the agent" <<endl <<endl;
-			agSem.signal();
+//			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 			agSem.signal();
 		}
 	}
-}
+}/*}}}*/
 
 
 /*What do agent threads do?
@@ -147,48 +155,69 @@ void smkrMatch(){
  *(3)After signal,acquire lck2 with mtx2 to prevent smoker entering its critical section
  *   when the agent finished supply ( tableContent += xxx ) but didn't make smokerComingTime. => race condition
  *(4)if any other agent put something on table, the second agent has to decide "smokerComingTime" before putting its own
-     resource on the table.
+ resource on the table.
  * */
 
-void agTobacco(){
+void agTobacco(){/*{{{*/
 	while(1){
-		unique_lock<mutex> lck(mtx);
 		agSem.wait();
+		unique_lock<mutex> lck(mtx);
 		unique_lock<mutex> lck2(mtx2);
 		if(tableContent != EMPTY){
 			smokerComingTime = distribution(generator);
 		}
 		tableContent += TABACCO;
 		cout <<"sup Tobacco.\n";
-		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH)
+		if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+			agSem.signal();
+		}
+		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
 			cout <<"smokerComingTime = " <<smokerComingTime <<endl;
+			smkrSem.signal(3);
+		}
+		lck.unlock();
+		this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 	}
-}
-void agPaper(){
+}/*}}}*/
+void agPaper(){/*{{{*/
 	while(1){
-		unique_lock<mutex> lck(mtx);
 		agSem.wait();
+		unique_lock<mutex> lck(mtx);
 		unique_lock<mutex> lck2(mtx2);
 		if(tableContent != EMPTY){
 			smokerComingTime = distribution(generator);
 		}
 		tableContent += PAPER;
 		cout <<"sup Paper.\n";
-		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH)
+		if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+			agSem.signal();
+		}
+		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
 			cout <<"smokerComingTime = " <<smokerComingTime <<endl;
+			smkrSem.signal(3);
+		}
+		lck.unlock();
+		this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 	}
-}
-void agMatch(){
+}/*}}}*/
+void agMatch(){/*{{{*/
 	while(1){
-		unique_lock<mutex> lck(mtx);
 		agSem.wait();
+		unique_lock<mutex> lck(mtx);
 		unique_lock<mutex> lck2(mtx2);
 		if(tableContent != EMPTY){
 			smokerComingTime = distribution(generator);
 		}
 		tableContent += MATCH;
 		cout <<"sup Match.\n";
-		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH)
+		if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+			agSem.signal();
+		}
+		if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
 			cout <<"smokerComingTime = " <<smokerComingTime <<endl;
+			smkrSem.signal(3);
+		}
+		lck.unlock();
+		this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
 	}
-}
+}/*}}}*/
