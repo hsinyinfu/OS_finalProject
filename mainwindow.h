@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 //#include <QPushButton>
+#include <QWidget>
+#include <QLabel>
 
 namespace Ui {
 class MainWindow;
@@ -14,7 +16,8 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    void cha();
+    void reset();
+    void action(int);
     ~MainWindow();
 
 private:
@@ -27,6 +30,14 @@ private:
     QImage *paperLabelImage;
     QImage *matchLabelImage;
     QImage *tableLabelImage;
+    QImage *Timage;
+    QImage *Pimage;
+    QImage *Mimage;
+    QImage *NullImage;
+    QImage *Tsurprise;
+    QImage *Psurprise;
+    QImage *Msurprise;
+    QImage *Surprise;
 //    QPushButton *push;
 };
 

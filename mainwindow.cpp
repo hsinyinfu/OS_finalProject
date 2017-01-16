@@ -22,21 +22,31 @@ MainWindow::MainWindow(QWidget *parent) :
     smkrMatchLabelImage = Image;
     ui->smkrMatch->setPixmap(QPixmap::fromImage(*smkrMatchLabelImage));
 
-    Image = new QImage("/Users/fu-hsin-ying/OS/pic/T.png");
-    tobaccoLabelImage = Image;
+    Timage = new QImage("/Users/fu-hsin-ying/OS/pic/T.png");
+    tobaccoLabelImage = Timage;
     ui->Tobacco->setPixmap(QPixmap::fromImage(*tobaccoLabelImage));
 
-    Image = new QImage("/Users/fu-hsin-ying/OS/pic/P.png");
-    paperLabelImage = Image;
+    Pimage = new QImage("/Users/fu-hsin-ying/OS/pic/P.png");
+    paperLabelImage = Pimage;
     ui->Paper->setPixmap(QPixmap::fromImage(*paperLabelImage));
 
-    Image = new QImage("/Users/fu-hsin-ying/OS/pic/M.png");
-    matchLabelImage = Image;
+    Mimage = new QImage("/Users/fu-hsin-ying/OS/pic/M.png");
+    matchLabelImage = Mimage;
     ui->Match->setPixmap(QPixmap::fromImage(*matchLabelImage));
 
     Image = new QImage("/Users/fu-hsin-ying/OS/pic/Table.png");
     tableLabelImage = Image;
     ui->Table->setPixmap(QPixmap::fromImage(*tableLabelImage));
+
+    NullImage = new QImage("/Users/fu-hsin-ying/OS/pic/null.png");
+
+    Surprise = new QImage("/Users/fu-hsin-ying/OS/pic/surprise.png");
+    Tsurprise = NullImage;
+    ui->Tsurprise->setPixmap(QPixmap::fromImage(*Tsurprise));
+    Psurprise = NullImage;
+    ui->Psurprise->setPixmap(QPixmap::fromImage(*Psurprise));
+    Msurprise = NullImage;
+    ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
 //    QPushButton *bu = new QPushButton(tr("初始"),this);
 //    push = bu;
 }
@@ -58,17 +68,57 @@ void MainWindow::reset(){
     smkrMatchLabelImage = Image;
     ui->smkrMatch->setPixmap(QPixmap::fromImage(*smkrMatchLabelImage));
 
-    Image = new QImage("/Users/fu-hsin-ying/OS/pic/null.png");
-    tobaccoLabelImage = Image;
+    tobaccoLabelImage = NullImage;
     ui->Tobacco->setPixmap(QPixmap::fromImage(*tobaccoLabelImage));
-    paperLabelImage = Image;
+    paperLabelImage = NullImage;
     ui->Paper->setPixmap(QPixmap::fromImage(*paperLabelImage));
-    matchLabelImage = Image;
+    matchLabelImage = NullImage;
     ui->Match->setPixmap(QPixmap::fromImage(*matchLabelImage));
 
     Image = new QImage("/Users/fu-hsin-ying/OS/pic/Table.png");
     tableLabelImage = Image;
     ui->Table->setPixmap(QPixmap::fromImage(*tableLabelImage));
+
+    Tsurprise = NullImage;
+    ui->Tsurprise->setPixmap(QPixmap::fromImage(*Tsurprise));
+    Psurprise = NullImage;
+    ui->Psurprise->setPixmap(QPixmap::fromImage(*Psurprise));
+    Msurprise = NullImage;
+    ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
+
+    //smkrTobaccoLabelImage->setGeometry(210,10,200,200);
+    //smkrPaperLabelImage->setGeometry(210,230,200,200);
+    //smkrMatchLabelImage->setGeometry(210,450,200,200);
+
+}
+
+void MainWindow::action(int Case){
+    switch(Case){
+        case 1: //TOBACCO be supplied
+            tobaccoLabelImage = Timage;
+            ui->Tobacco->setPixmap(QPixmap::fromImage(*tobaccoLabelImage));
+            break;
+        case 3: //PAPER be supplied
+            paperLabelImage = Pimage;
+            ui->Paper->setPixmap(QPixmap::fromImage(*paperLabelImage));
+            break;
+        case 5: //MATCH be supplied
+            matchLabelImage = Mimage;
+            ui->Match->setPixmap(QPixmap::fromImage(*matchLabelImage));
+            break;
+        case 8: //smkrTobacco is coming
+            Tsurprise = Surprise;
+            ui->Tsurprise->setPixmap(QPixmap::fromImage(*Tsurprise));
+            break;
+        case 4: //smkrMatch is coming
+            Msurprise = Surprise;
+            ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
+            break;
+        case 6: //smkrPaper is coming
+            Psurprise = Surprise;
+            ui->Psurprise->setPixmap(QPixmap::fromImage(*Psurprise));
+            break;
+    }
 
 }
 

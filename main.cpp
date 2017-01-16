@@ -13,10 +13,10 @@
 using namespace std;
 
 #define THREAD_NUM 6
-#define TABACCO 1
+#define TOBACCO 1
 #define PAPER 3
 #define MATCH 5
-#define MEAN 1 //for poisson random variable
+#define MEAN 2 //for poisson random variable
 #define EMPTY 0
 #define TIME_FOR_ADJUSTMENT 100
 
@@ -89,10 +89,12 @@ protected:
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
 //                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
+                gui -> action( PAPER + MATCH);
                 smokingTime = distribution(generator);
                 cout <<"smkrTobacco is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
-                this_thread::sleep_for(chrono::milliseconds(smokingTime));
+//                this_thread::sleep_for(chrono::milliseconds(smokingTime));
+                gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
@@ -110,14 +112,16 @@ public:
 protected:
     void run(){
         while(1){
-            if(tableContent == (TABACCO + MATCH)){
+            if(tableContent == (TOBACCO + MATCH)){
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
 //                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
+                gui -> action( TOBACCO + MATCH);
                 smokingTime = distribution(generator);
                 cout <<"smkrPaper is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
 //                this_thread::sleep_for(chrono::milliseconds(smokingTime));
+                gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
@@ -135,14 +139,16 @@ public:
 protected:
     void run(){
         while(1){
-            if(tableContent == (TABACCO + PAPER)){
+            if(tableContent == (TOBACCO + PAPER)){
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
 //                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
+                gui -> action( TOBACCO + PAPER);
                 smokingTime = distribution(generator);
                 cout <<"smkrMatch is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
 //                this_thread::sleep_for(chrono::milliseconds(smokingTime));
+                gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
@@ -174,12 +180,13 @@ protected:
             if(tableContent != EMPTY){
                 smokerComingTime = distribution(generator);
             }
-            tableContent += TABACCO;
+            tableContent += TOBACCO;
             cout <<"sup Tobacco.\n";
-            if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+            gui -> action(TOBACCO);
+            if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
                 agSem.signal();
             }
-            if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
+            if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
                 cout <<"smokerComingTime = " <<smokerComingTime <<endl;
                 smkrSem.signal(3);
             }
@@ -203,10 +210,11 @@ protected:
             }
             tableContent += PAPER;
             cout <<"sup Paper.\n";
-            if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+            gui -> action(PAPER);
+            if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
                 agSem.signal();
             }
-            if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
+            if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
                 cout <<"smokerComingTime = " <<smokerComingTime <<endl;
                 smkrSem.signal(3);
             }
@@ -230,10 +238,11 @@ protected:
             }
             tableContent += MATCH;
             cout <<"sup Match.\n";
-            if(tableContent == TABACCO || tableContent == PAPER || tableContent == MATCH){
+            gui -> action(MATCH);
+            if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
                 agSem.signal();
             }
-            if(tableContent != TABACCO && tableContent != PAPER && tableContent != MATCH){
+            if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
                 cout <<"smokerComingTime = " <<smokerComingTime <<endl;
                 smkrSem.signal(3);
             }
@@ -257,6 +266,7 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.setWindowTitle(QObject::tr("Tobacco Smoker Problem")); //設定窗口標題
     gui = &w;
+    gui -> reset();
     w.show();
 
     srand(time(NULL));
