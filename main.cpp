@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include <QApplication>
-
 #include<iostream>
 #include<stdlib.h>
 #include<thread>
@@ -8,7 +7,8 @@
 #include<random>
 #include<chrono>
 #include<QThread>
-#include <condition_variable>
+#include<condition_variable>
+#include<QWidget>
 
 using namespace std;
 
@@ -75,9 +75,17 @@ int smokingTime;
 default_random_engine generator;
 poisson_distribution<int> distribution(MEAN);
 
-void cleanTable(){/*{{{*/
+void cleanTable(){
     tableContent = 0;
-}/*}}}*/
+}
+
+/*What do smoker threads do?
+ *(1)wait until there are two resources on the table
+ *(2)acquire lck2 with mtx2 to prevent agent entering its critical section when the smoker is doing its job => race condition
+ *(3)come to table(i.e.,thread sleep) for "smokerComingTime"
+ *(4)decide "smokingTime" and smoke(i.e.,sleep thread again)
+ *(5)clean the table and wake up the agents
+ * */
 
 class smkrTobacco : public QThread{
 public:
@@ -88,18 +96,15 @@ protected:
             if(tableContent == (PAPER + MATCH)){
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
                 gui -> action( PAPER + MATCH);
                 smokingTime = distribution(generator);
                 cout <<"smkrTobacco is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokingTime));
                 gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
                 cout <<"Wake up the agent" <<endl <<endl;
-    //			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
                 agSem.signal();
             }
         }
@@ -115,18 +120,15 @@ protected:
             if(tableContent == (TOBACCO + MATCH)){
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
                 gui -> action( TOBACCO + MATCH);
                 smokingTime = distribution(generator);
                 cout <<"smkrPaper is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokingTime));
                 gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
                 cout <<"Wake up the agent" <<endl <<endl;
-    //			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
                 agSem.signal();
             }
         }
@@ -142,30 +144,29 @@ protected:
             if(tableContent == (TOBACCO + PAPER)){
                 unique_lock<mutex> lck(mtx2);
                 this_thread::sleep_for(chrono::seconds(smokerComingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokerComingTime));
                 gui -> action( TOBACCO + PAPER);
                 smokingTime = distribution(generator);
                 cout <<"smkrMatch is smoking for " <<smokingTime <<"seconds." <<endl;
                 this_thread::sleep_for(chrono::seconds(smokingTime));
-//                this_thread::sleep_for(chrono::milliseconds(smokingTime));
                 gui -> reset();
                 cout <<"Finish" <<endl;
                 cout <<"Clean the table" <<endl;
                 cleanTable();
                 cout <<"Wake up the agent" <<endl <<endl;
-    //			this_thread::sleep_for(chrono::milliseconds(TIME_FOR_ADJUSTMENT));
                 agSem.signal();
             }
         }
     }
 };
 
-/*What do smoker threads do?
- *(1)wait until there are two resources on the table
- *(2)acquire lck2 with mtx2 to prevent agent entering its critical section when the smoker is doing its job => race condition
- *(3)come to table(i.e.,thread sleep) for "smokerComingTime"
- *(4)decide "smokingTime" and smoke(i.e.,sleep thread again)
- *(5)clean the table and wake up the agents
+
+/*What do agent threads do?
+ *(1)acquire lck with mtx to ensure that no other agents are in critical section
+ *(2)wait for smoker's signal to supply resource.
+ *(3)After signal,acquire lck2 with mtx2 to prevent smoker entering its critical section
+ *   when the agent finished supply ( tableContent += xxx ) but didn't make smokerComingTime. => race condition
+ *(4)if any other agent put something on table, the second agent has to decide "smokerComingTime" before putting its own
+ resource on the table.
  * */
 
 class agTobacco : public QThread{
@@ -184,6 +185,7 @@ protected:
             cout <<"sup Tobacco.\n";
             gui -> action(TOBACCO);
             if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
+                this_thread::sleep_for(chrono::seconds(1));
                 agSem.signal();
             }
             if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
@@ -212,6 +214,7 @@ protected:
             cout <<"sup Paper.\n";
             gui -> action(PAPER);
             if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
+                this_thread::sleep_for(chrono::seconds(1));
                 agSem.signal();
             }
             if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
@@ -240,6 +243,7 @@ protected:
             cout <<"sup Match.\n";
             gui -> action(MATCH);
             if(tableContent == TOBACCO || tableContent == PAPER || tableContent == MATCH){
+                this_thread::sleep_for(chrono::seconds(1));
                 agSem.signal();
             }
             if(tableContent != TOBACCO && tableContent != PAPER && tableContent != MATCH){
@@ -251,14 +255,6 @@ protected:
         }
     }
 };
-/*What do agent threads do?
- *(1)acquire lck with mtx to ensure that no other agents are in critical section
- *(2)wait for smoker's signal to supply resource.
- *(3)After signal,acquire lck2 with mtx2 to prevent smoker entering its critical section
- *   when the agent finished supply ( tableContent += xxx ) but didn't make smokerComingTime. => race condition
- *(4)if any other agent put something on table, the second agent has to decide "smokerComingTime" before putting its own
- resource on the table.
- * */
 
 int main(int argc, char *argv[])
 {

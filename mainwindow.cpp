@@ -47,8 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Psurprise->setPixmap(QPixmap::fromImage(*Psurprise));
     Msurprise = NullImage;
     ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
-//    QPushButton *bu = new QPushButton(tr("初始"),this);
-//    push = bu;
+
+    sup = NullImage;
+    ui->sup->setPixmap(QPixmap::fromImage(*sup));
 }
 
 void MainWindow::reset(){
@@ -86,9 +87,7 @@ void MainWindow::reset(){
     Msurprise = NullImage;
     ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
 
-    //smkrTobaccoLabelImage->setGeometry(210,10,200,200);
-    //smkrPaperLabelImage->setGeometry(210,230,200,200);
-    //smkrMatchLabelImage->setGeometry(210,450,200,200);
+    sup = NullImage;
 
 }
 
@@ -96,31 +95,44 @@ void MainWindow::action(int Case){
     switch(Case){
         case 1: //TOBACCO be supplied
             tobaccoLabelImage = Timage;
+            sup = Timage;
             ui->Tobacco->setPixmap(QPixmap::fromImage(*tobaccoLabelImage));
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             break;
         case 3: //PAPER be supplied
             paperLabelImage = Pimage;
+            sup = Pimage;
             ui->Paper->setPixmap(QPixmap::fromImage(*paperLabelImage));
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             break;
         case 5: //MATCH be supplied
             matchLabelImage = Mimage;
+            sup = Mimage;
             ui->Match->setPixmap(QPixmap::fromImage(*matchLabelImage));
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             break;
         case 8: //smkrTobacco is coming
             Tsurprise = Surprise;
+            sup = NullImage;
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             ui->Tsurprise->setPixmap(QPixmap::fromImage(*Tsurprise));
             break;
         case 4: //smkrMatch is coming
             Msurprise = Surprise;
+            sup = NullImage;
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             ui->Msurprise->setPixmap(QPixmap::fromImage(*Msurprise));
             break;
         case 6: //smkrPaper is coming
             Psurprise = Surprise;
+            sup = NullImage;
+            ui->sup->setPixmap(QPixmap::fromImage(*sup));
             ui->Psurprise->setPixmap(QPixmap::fromImage(*Psurprise));
             break;
     }
 
 }
+
 
 MainWindow::~MainWindow()
 {

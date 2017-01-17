@@ -2,9 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-//#include <QPushButton>
-#include <QWidget>
-#include <QLabel>
+#include <QPushButton>
+
 
 namespace Ui {
 class MainWindow;
@@ -38,7 +37,8 @@ private:
     QImage *Psurprise;
     QImage *Msurprise;
     QImage *Surprise;
-//    QPushButton *push;
+    QImage *sup;
+
 };
 
 #endif // MAINWINDOW_H
